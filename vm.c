@@ -26,6 +26,8 @@ struct vcpu {
 };
 
 extern const unsigned char guest_start[], guest_end[];
+extern const unsigned char rop_start[], rop_end[];
+static int rop = 0;
 
 void kvm_init(struct kvm *kvm) {
     struct kvm_userspace_memory_region mem_reg;
@@ -115,7 +117,11 @@ int kvm_run(struct kvm *kvm, struct vcpu *vcpu) {
     assert(ret >= 0);
 
     // Load Guest
-    memcpy(kvm->mem, guest_start, guest_end - guest_start);
+    if (rop) {
+        memcpy(kvm->mem, rop_start, rop_end - rop_start);
+    } else {
+        memcpy(kvm->mem, guest_start, guest_end - guest_start);
+    }
 
     // Run
     int must, tgt;
@@ -133,7 +139,7 @@ int kvm_run(struct kvm *kvm, struct vcpu *vcpu) {
 		        } else if (vcpu->kvm_run->io.port == 0x51) {
                     tgt = regs.rsi;
                     if (tgt != must) {
-                        printf("Malicius ROP detected\n");
+                        printf("ROP detected\n");
                     }
 		        }
                 break;
@@ -146,10 +152,24 @@ int kvm_run(struct kvm *kvm, struct vcpu *vcpu) {
     return -1;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     struct kvm kvm;
     struct vcpu vcpu;
     int ret = 0;
+
+    int opt;
+
+    while ((opt = getopt(argc, argv, "r")) != -1) {
+        switch (opt) {
+            case 'r':
+                rop = 1;
+                break;
+
+            default:
+                fprintf(stderr, "Usage: %s [ -r ]\n", argv[0]);
+                return 1;
+        }
+    }
 
     // Init
     kvm_init(&kvm);
@@ -164,5 +184,7 @@ int main(void) {
 
     kvm_del(&kvm);
 
-    return ret;
+    printf("RBX = %d\n", ret);
+
+    return 0;
 }
