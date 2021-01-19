@@ -42,6 +42,9 @@ make run
 ### Argumento (-r)
 O argumento `-r` é opcional, quando presente ele carrega o código ROP no
 hypervisor.  Por padrão, o código sem ROP é carregado.
+```
+./vm -r
+```
 
 ## Saída
 A execução padrão seta o registrador `rbx` para `10`. Enquanto isso, a execução
