@@ -134,14 +134,14 @@ int kvm_run(struct kvm *kvm, struct vcpu *vcpu) {
                 return regs.rbx;
             case KVM_EXIT_IO:
                 ret = ioctl(vcpu->fd, KVM_GET_REGS, &regs);
-		        if (vcpu->kvm_run->io.port == 0x50) {
-			        must = regs.rip + regs.rsi;
-		        } else if (vcpu->kvm_run->io.port == 0x51) {
+                if (vcpu->kvm_run->io.port == 0x50) {
+                    must = regs.rip + regs.rsi;
+                } else if (vcpu->kvm_run->io.port == 0x51) {
                     tgt = regs.rsi;
                     if (tgt != must) {
                         printf("ROP detected\n");
                     }
-		        }
+                }
                 break;
             default:
                 cont = 0;
